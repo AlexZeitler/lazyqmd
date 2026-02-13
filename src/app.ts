@@ -552,11 +552,17 @@ export class App {
         }, 100);
       });
 
-      // Open Chrome in app mode
-      Bun.spawn(["google-chrome", `--app=http://localhost:${port}`], {
-        stdout: "ignore",
-        stderr: "ignore",
-      });
+      // Open browser in app mode
+      const browser = await findBrowser();
+      if (browser) {
+        Bun.spawn([browser, `--app=http://localhost:${port}`], {
+          stdout: "ignore",
+          stderr: "ignore",
+        });
+      } else {
+        this.mainPanel.title = "Preview: no browser found";
+        return;
+      }
 
       this.mainPanel.title = this.documentView.getCurrentTitle() ?? "Preview";
     } catch (err) {
@@ -722,6 +728,26 @@ export class App {
       },
     );
   }
+}
+
+async function findBrowser(): Promise<string | null> {
+  const candidates = [
+    "google-chrome",
+    "google-chrome-stable",
+    "chromium",
+    "chromium-browser",
+    "brave",
+    "brave-browser",
+  ];
+  for (const name of candidates) {
+    const proc = Bun.spawn(["which", name], {
+      stdout: "pipe",
+      stderr: "ignore",
+    });
+    const code = await proc.exited;
+    if (code === 0) return name;
+  }
+  return null;
 }
 
 function escapeHtml(s: string): string {
