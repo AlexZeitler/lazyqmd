@@ -225,7 +225,7 @@ export class App {
     if (this.state === "delete-collection") {
       return t`${bold("Enter")}: Confirm  ${bold("Esc")}: Cancel`;
     }
-    return t`${bold("Tab")}: Switch  ${bold("/")}: Search  ${bold("a")}: Add  ${bold("d")}: Delete  ${bold("r")}: Rename  ${bold("e")}: Embed  ${bold("Enter")}: Open  ${bold("q")}: Quit`;
+    return t`${bold("Tab")}: Switch  ${bold("/")}: Search  ${bold("a")}: Add  ${bold("d")}: Delete  ${bold("r")}: Rename  ${bold("e")}: Embed  ${bold("u")}: Update  ${bold("Enter")}: Open  ${bold("q")}: Quit`;
   }
 
   private updateFooter(): void {
@@ -345,6 +345,11 @@ export class App {
         }
         if (key.name === "e") {
           this.runEmbed();
+          key.preventDefault();
+          return;
+        }
+        if (key.name === "u") {
+          this.runUpdate();
           key.preventDefault();
           return;
         }
@@ -617,6 +622,29 @@ export class App {
     });
 
     return this.previewServer.port!;
+  }
+
+  private async runUpdate(): Promise<void> {
+    const prevTitle = this.mainPanel.title;
+    this.mainPanel.title = "Updating...";
+    this.detailView.showStatus("Re-indexing all collections...");
+    try {
+      const proc = Bun.spawn(["qmd", "update"], {
+        stdout: "pipe",
+        stderr: "pipe",
+      });
+      const code = await proc.exited;
+      if (code === 0) {
+        await this.refreshCollections();
+        this.detailView.showStatus("Index updated.");
+      } else {
+        const stderr = await new Response(proc.stderr).text();
+        this.detailView.showStatus(`Update failed: ${stderr.trim()}`, true);
+      }
+    } catch (err) {
+      this.detailView.showStatus(`Update error: ${err}`, true);
+    }
+    this.mainPanel.title = prevTitle;
   }
 
   private stopPreview(): void {
