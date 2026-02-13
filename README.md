@@ -6,7 +6,7 @@ A terminal UI for browsing, searching, and previewing [qmd](https://github.com/t
 
 - [Bun](https://bun.sh) runtime
 - [qmd](https://github.com/tobi/qmd) CLI installed and configured with at least one collection
-- A Chromium-based browser (Chrome, Chromium, Brave) for live preview
+- A Chromium-based browser for live preview, detected automatically in this order: `google-chrome`, `google-chrome-stable`, `chromium`, `chromium-browser`, `brave`, `brave-browser`
 
 ## Prerequisites
 
