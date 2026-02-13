@@ -2,6 +2,8 @@
 
 A terminal UI for browsing, searching, and previewing [qmd](https://github.com/tobi/qmd) document collections. Built with [Bun](https://bun.sh) and [@opentui/core](https://github.com/nicco-io/opentui).
 
+![](./assets/lazyqmd-search-tmux-results.png)
+
 ## Requirements
 
 - [Bun](https://bun.sh) runtime
@@ -78,6 +80,11 @@ Search scope follows the sidebar selection — select "All" to search across all
 | `p` | Open live preview in Chrome |
 | `Esc` | Back |
 
+
+![](./assets/lazyqmd-neovim.png)
+
+![](./assets/lazyqmd-html-preview.png)
+
 ### Live Preview
 
 Pressing `p` in document view opens a rendered HTML preview in Chrome. The preview:
@@ -85,6 +92,7 @@ Pressing `p` in document view opens a rendered HTML preview in Chrome. The previ
 - Renders Markdown with frontmatter metadata
 - Displays images and assets from the source directory
 - Auto-reloads when the source file is saved
+
 
 ## Configuration
 
