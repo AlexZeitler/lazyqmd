@@ -150,9 +150,35 @@ export async function renameCollection(
   await run(["collection", "rename", oldName, newName]);
 }
 
-export async function listFiles(collection: string): Promise<string[]> {
+export type FileEntry = {
+  size: string;
+  date: string;
+  uri: string;
+  path: string; // relative path within collection (extracted from URI)
+};
+
+export async function listFiles(collection: string): Promise<FileEntry[]> {
   const output = await run(["ls", collection]);
-  return output.split("\n").filter(Boolean);
+  const lines = output.split("\n").filter(Boolean);
+  return lines
+    .map((line) => {
+      // Format: "3.2 KB  Sep 24 15:44  qmd://collection/path/file.md"
+      const uriMatch = line.match(/(qmd:\/\/\S+)/);
+      if (!uriMatch) return null;
+      const uri = uriMatch[1]!;
+      // Extract relative path from URI: qmd://collection/path → path
+      const relPath = uri.replace(`qmd://${collection}/`, "");
+      // Everything before the URI is metadata (size + date)
+      const meta = line.slice(0, uriMatch.index!).trim();
+      const parts = meta.split(/\s{2,}/);
+      return {
+        size: parts[0] ?? "",
+        date: parts[1] ?? "",
+        uri,
+        path: relPath,
+      };
+    })
+    .filter((e): e is FileEntry => e !== null);
 }
 
 export async function embed(): Promise<void> {

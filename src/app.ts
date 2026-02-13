@@ -31,12 +31,14 @@ import { DocumentView } from "./views/document.ts";
 import { AddCollectionView } from "./views/add-collection.ts";
 import { RenameCollectionView } from "./views/rename-collection.ts";
 import { ConfirmDeleteView } from "./views/confirm-delete.ts";
+import { FilesView } from "./views/files.ts";
 
 type AppState =
   | "collections"
   | "detail"
   | "search"
   | "document"
+  | "files"
   | "add-collection"
   | "rename-collection"
   | "delete-collection";
@@ -58,6 +60,7 @@ export class App {
   private addCollectionView: AddCollectionView;
   private renameCollectionView: RenameCollectionView;
   private confirmDeleteView: ConfirmDeleteView;
+  private filesView: FilesView;
 
   private state: AppState = "collections";
   private previousState: AppState = "detail";
@@ -151,6 +154,7 @@ export class App {
     this.addCollectionView = new AddCollectionView(renderer);
     this.renameCollectionView = new RenameCollectionView(renderer);
     this.confirmDeleteView = new ConfirmDeleteView(renderer);
+    this.filesView = new FilesView(renderer);
 
     // Add collections select to sidebar
     this.sidebar.add(this.collectionsView.select);
@@ -164,6 +168,10 @@ export class App {
     });
 
     this.searchView.setOnDocumentOpen((file, title) => {
+      this.showDocument(file, title);
+    });
+
+    this.filesView.setOnFileOpen((file, title) => {
       this.showDocument(file, title);
     });
 
@@ -216,6 +224,9 @@ export class App {
     if (this.state === "document") {
       return t`${bold("Esc")}: Back  ${bold("j/k")}: Scroll  ${bold("e")}: Edit  ${bold("p")}: Preview  ${bold("q")}: Quit`;
     }
+    if (this.state === "files") {
+      return t`${bold("Esc")}: Back  ${bold("Tab")}: Filter/List  ${bold("Enter")}: Open  ${bold("q")}: Quit`;
+    }
     if (this.state === "add-collection") {
       return t`${bold("Tab")}: Complete/Next  ${bold("Enter")}: Confirm  ${bold("Esc")}: Cancel`;
     }
@@ -225,7 +236,7 @@ export class App {
     if (this.state === "delete-collection") {
       return t`${bold("Enter")}: Confirm  ${bold("Esc")}: Cancel`;
     }
-    return t`${bold("Tab")}: Switch  ${bold("/")}: Search  ${bold("a")}: Add  ${bold("d")}: Delete  ${bold("r")}: Rename  ${bold("e")}: Embed  ${bold("u")}: Update  ${bold("Enter")}: Open  ${bold("q")}: Quit`;
+    return t`${bold("Tab")}: Switch  ${bold("/")}: Search  ${bold("f")}: Files  ${bold("a")}: Add  ${bold("d")}: Delete  ${bold("r")}: Rename  ${bold("e")}: Embed  ${bold("u")}: Update  ${bold("q")}: Quit`;
   }
 
   private updateFooter(): void {
@@ -258,6 +269,22 @@ export class App {
           return;
         }
         // Let input handle everything else
+        return;
+      }
+
+      // When files filter input is focused, only intercept escape and tab
+      if (this.state === "files" && this.filesView.input.focused) {
+        if (key.name === "escape") {
+          this.leaveFiles();
+          key.preventDefault();
+          return;
+        }
+        if (key.name === "tab") {
+          this.filesView.focusList();
+          key.preventDefault();
+          return;
+        }
+        // Let input handle everything else (typing)
         return;
       }
 
@@ -343,6 +370,11 @@ export class App {
           key.preventDefault();
           return;
         }
+        if (key.name === "f") {
+          this.enterFiles();
+          key.preventDefault();
+          return;
+        }
         if (key.name === "e") {
           this.runEmbed();
           key.preventDefault();
@@ -368,6 +400,16 @@ export class App {
       return;
     }
 
+    if (this.state === "files") {
+      // Toggle between filter input and file list
+      if (this.filesView.input.focused) {
+        this.filesView.focusList();
+      } else {
+        this.filesView.focusInput();
+      }
+      return;
+    }
+
     // Toggle focus between sidebar and main
     if (this.focusArea === "sidebar") {
       this.focusArea = "main";
@@ -385,6 +427,8 @@ export class App {
       this.leaveDocument();
     } else if (this.state === "search") {
       this.leaveSearch();
+    } else if (this.state === "files") {
+      this.leaveFiles();
     }
   }
 
@@ -438,6 +482,12 @@ export class App {
       this.state = "search";
       this.mainPanel.title = "Search";
       this.searchView.focusResults();
+    } else if (this.previousState === "files") {
+      this.switchMainView("files");
+      this.state = "files";
+      const col = this.collectionsView.getSelectedCollection();
+      this.mainPanel.title = col ? `Files: ${col.name}` : "Files";
+      this.filesView.focusList();
     } else {
       this.switchMainView("detail");
       this.state = "detail";
@@ -471,6 +521,29 @@ export class App {
     this.confirmDeleteView.show(col);
     this.switchMainView("delete-collection");
     this.confirmDeleteView.focusSelect();
+    this.updateFooter();
+  }
+
+  private async enterFiles(): Promise<void> {
+    const col = this.collectionsView.getSelectedCollection();
+    if (!col) return;
+    this.switchMainView("files");
+    this.mainPanel.title = `Files: ${col.name}`;
+    this.filesView.focusInput();
+    this.updateFooter();
+    await this.filesView.load(col.name);
+  }
+
+  private leaveFiles(): void {
+    this.switchMainView("detail");
+    this.state = "detail";
+    const col = this.collectionsView.getSelectedCollection();
+    if (col) {
+      this.detailView.show(col);
+    }
+    this.mainPanel.title = "Collection";
+    this.collectionsView.select.focus();
+    this.focusArea = "sidebar";
     this.updateFooter();
   }
 
@@ -704,6 +777,9 @@ export class App {
         break;
       case "document":
         this.mainPanel.add(this.documentView.container);
+        break;
+      case "files":
+        this.mainPanel.add(this.filesView.container);
         break;
       case "add-collection":
         this.mainPanel.add(this.addCollectionView.container);
