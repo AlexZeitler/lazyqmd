@@ -5,8 +5,18 @@ A terminal UI for browsing, searching, and previewing [qmd](https://github.com/t
 ## Requirements
 
 - [Bun](https://bun.sh) runtime
-- [qmd](https://github.com/qmd/qmd) CLI installed and configured
-- Google Chrome (for preview)
+- [qmd](https://github.com/tobi/qmd) CLI installed and configured with at least one collection
+- A Chromium-based browser (Chrome, Chromium, Brave) for live preview
+
+## Prerequisites
+
+The qmd MCP server must be running before starting lazyqmd:
+
+```sh
+qmd serve
+```
+
+By default lazyqmd connects to port 8181. This can be changed in the [configuration](#configuration).
 
 ## Install
 
