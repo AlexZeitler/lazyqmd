@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# lazyqmd - TUI for qmd document collections
+set -euo pipefail
+
+find_bun() {
+  if command -v bun &>/dev/null; then
+    local ver=$(bun --version 2>/dev/null || echo "0")
+    if [[ "$ver" =~ ^1\. ]]; then
+      command -v bun
+      return 0
+    fi
+  fi
+
+  : "${HOME:=$(eval echo ~)}"
+
+  if [[ "${BASH_SOURCE[0]}" == */.bun/* ]]; then
+    local bun_home="${BASH_SOURCE[0]%%/.bun/*}/.bun"
+    if [[ -x "$bun_home/bin/bun" ]]; then
+      echo "$bun_home/bin/bun"
+      return 0
+    fi
+  fi
+
+  local candidates=(
+    "$HOME/.local/share/mise/installs/bun/latest/bin/bun"
+    "$HOME/.local/share/mise/shims/bun"
+    "$HOME/.asdf/shims/bun"
+    "/opt/homebrew/bin/bun"
+    "/usr/local/bin/bun"
+    "$HOME/.bun/bin/bun"
+  )
+  for c in "${candidates[@]}"; do
+    [[ -x "$c" ]] && { echo "$c"; return 0; }
+  done
+
+  return 1
+}
+
+BUN=$(find_bun) || { echo "Error: bun not found. Install from https://bun.sh" >&2; exit 1; }
+
+SOURCE="${BASH_SOURCE[0]}"
+while [[ -L "$SOURCE" ]]; do
+  DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+
+exec "$BUN" "$SCRIPT_DIR/src/index.ts" "$@"
