@@ -55,6 +55,7 @@ bun src/index.ts
 | `d` | Delete collection |
 | `r` | Rename collection |
 | `e` | Create embeddings |
+| `u` | Re-index all collections (`qmd update`) |
 | `q` | Quit |
 
 ### Search
