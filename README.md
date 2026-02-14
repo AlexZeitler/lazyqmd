@@ -15,7 +15,7 @@ A terminal UI for browsing, searching, and previewing [qmd](https://github.com/t
 The qmd MCP server must be running before starting lazyqmd:
 
 ```sh
-qmd serve
+qmd mcp --http
 ```
 
 By default lazyqmd connects to port 8181. This can be changed in the [configuration](#configuration).
