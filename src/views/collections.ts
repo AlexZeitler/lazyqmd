@@ -19,10 +19,11 @@ export class CollectionsView {
       id: "collections-select",
       width: "100%" as any,
       flexGrow: 1,
-      options: [],
+      options: [{ name: "", description: "", value: "__none__" }],
       showDescription: true,
       showScrollIndicator: true,
       wrapSelection: true,
+
       selectedBackgroundColor: theme.selection_bg,
       selectedTextColor: theme.selection_fg,
       selectedDescriptionColor: theme.selection_desc,

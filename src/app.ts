@@ -43,7 +43,8 @@ type AppState =
   | "files"
   | "add-collection"
   | "rename-collection"
-  | "delete-collection";
+  | "delete-collection"
+  | "edit-context";
 type FocusArea = "sidebar" | "main";
 
 export class App {
@@ -63,6 +64,7 @@ export class App {
   private renameCollectionView: RenameCollectionView;
   private confirmDeleteView: ConfirmDeleteView;
   private filesView: FilesView;
+  private currentContext: string | null = null;
 
   private state: AppState = "collections";
   private previousState: AppState = "detail";
@@ -86,6 +88,7 @@ export class App {
       flexDirection: "column",
       width: "100%" as any,
       height: "100%" as any,
+
     });
     renderer.root.add(this.root);
 
@@ -214,6 +217,38 @@ export class App {
     };
     this.confirmDeleteView.onCancel = () => this.leaveManagement();
 
+    // Context edit save
+    this.detailView.onContextSave = async (text) => {
+      const col = this.collectionsView.getSelectedCollection();
+      if (!col) return;
+      try {
+        if (text) {
+          await this.mcp.contextAdd(col.uri, text);
+          this.currentContext = text;
+        } else {
+          await this.mcp.contextRemove(col.uri);
+          this.currentContext = null;
+        }
+        this.detailView.stopEditContext();
+        this.detailView.showContext(this.currentContext);
+        this.detailView.showStatus(text ? "Context saved." : "Context removed.");
+        this.state = "detail";
+        this.collectionsView.select.focus();
+        this.focusArea = "sidebar";
+        this.updateFooter();
+      } catch (err) {
+        this.detailView.showStatus(`Error: ${err}`, true);
+      }
+    };
+
+    this.detailView.onContextCancel = () => {
+      this.detailView.stopEditContext();
+      this.state = "detail";
+      this.collectionsView.select.focus();
+      this.focusArea = "sidebar";
+      this.updateFooter();
+    };
+
     // Keyboard
     this.setupKeyboard();
   }
@@ -243,7 +278,10 @@ export class App {
     if (this.state === "delete-collection") {
       return t`${bold("Enter")}: Confirm  ${bold("Esc")}: Cancel`;
     }
-    return t`${bold("Tab")}: Switch  ${bold("/")}: Search  ${bold("f")}: Files  ${bold("a")}: Add  ${bold("d")}: Delete  ${bold("r")}: Rename  ${bold("e")}: Embed  ${bold("u")}: Update  ${bold("q")}: Quit`;
+    if (this.state === "edit-context") {
+      return t`${bold("Enter")}: Save  ${bold("Esc")}: Cancel  ${fg(this.theme.muted)("(empty = delete context)")}`;
+    }
+    return t`${bold("Tab")}: Switch  ${bold("/")}: Search  ${bold("f")}: Files  ${bold("x")}: Context  ${bold("c")}: Cleanup  ${bold("a")}: Add  ${bold("d")}: Delete  ${bold("r")}: Rename  ${bold("e")}: Embed  ${bold("u")}: Update  ${bold("q")}: Quit`;
   }
 
   private updateFooter(): void {
@@ -324,6 +362,17 @@ export class App {
           return;
         }
         // Let input handle everything else (typing)
+        return;
+      }
+
+      // When context input is focused, only intercept escape
+      if (this.state === "edit-context" && this.detailView.contextInput.focused) {
+        if (key.name === "escape") {
+          this.detailView.onContextCancel?.();
+          key.preventDefault();
+          return;
+        }
+        // Let input handle everything else (typing + enter)
         return;
       }
 
@@ -424,6 +473,16 @@ export class App {
           key.preventDefault();
           return;
         }
+        if (key.name === "x") {
+          this.startEditContext();
+          key.preventDefault();
+          return;
+        }
+        if (key.name === "c") {
+          this.runCleanup();
+          key.preventDefault();
+          return;
+        }
       }
     });
   }
@@ -468,6 +527,8 @@ export class App {
       this.leaveSearch();
     } else if (this.state === "files") {
       this.leaveFiles();
+    } else if (this.state === "edit-context") {
+      this.detailView.onContextCancel?.();
     }
   }
 
@@ -597,6 +658,60 @@ export class App {
     this.collectionsView.select.focus();
     this.focusArea = "sidebar";
     this.updateFooter();
+  }
+
+  private async loadContext(col: Collection): Promise<void> {
+    try {
+      const output = await this.mcp.contextList();
+      // Parse context for this collection
+      const lines = output.split("\n");
+      let inCollection = false;
+      let foundText: string | null = null;
+
+      for (const line of lines) {
+        if (!line.startsWith(" ") && line.trim()) {
+          inCollection = line.trim() === col.name;
+          continue;
+        }
+        if (!inCollection) continue;
+        // Context text line (4-space indent)
+        if (line.match(/^ {4}\S/)) {
+          foundText = line.trim();
+          break;
+        }
+      }
+
+      this.currentContext = foundText;
+      this.detailView.showContext(foundText);
+    } catch {
+      this.currentContext = null;
+      this.detailView.showContext(null);
+    }
+  }
+
+  private startEditContext(): void {
+    const col = this.collectionsView.getSelectedCollection();
+    if (!col) {
+      this.detailView.showStatus("Select a collection first (not All)", true);
+      return;
+    }
+    this.state = "edit-context";
+    this.focusArea = "main";
+    this.detailView.startEditContext(this.currentContext ?? "");
+    this.updateFooter();
+  }
+
+  private async runCleanup(): Promise<void> {
+    const prevTitle = this.mainPanel.title;
+    this.mainPanel.title = "Cleanup...";
+    this.detailView.showStatus("Running cleanup...");
+    try {
+      const output = await this.mcp.cleanup();
+      this.detailView.showStatus(output.trim().replace(/\n/g, "  |  "));
+    } catch (err) {
+      this.detailView.showStatus(`Cleanup error: ${err}`, true);
+    }
+    this.mainPanel.title = prevTitle;
   }
 
   private async openInEditor(): Promise<void> {
@@ -832,6 +947,9 @@ export class App {
         this.mainPanel.add(this.confirmDeleteView.container);
         this.mainPanel.title = "Delete Collection";
         break;
+      case "edit-context":
+        this.mainPanel.add(this.detailView.container);
+        break;
     }
   }
 
@@ -860,11 +978,13 @@ export class App {
           if (option.value === "__all__") {
             this.detailView.showAll(this.collections);
             this.mainPanel.title = "All Collections";
+            this.currentContext = null;
           } else {
             const col = this.collections.find((c) => c.name === option.value);
             if (col) {
               this.detailView.show(col);
               this.mainPanel.title = "Collection";
+              this.loadContext(col);
             }
           }
         }

@@ -78,6 +78,7 @@ export class FilesView {
       showDescription: true,
       showScrollIndicator: true,
       wrapSelection: true,
+
       selectedBackgroundColor: theme.selection_bg,
       selectedTextColor: theme.selection_fg,
       selectedDescriptionColor: theme.selection_desc,

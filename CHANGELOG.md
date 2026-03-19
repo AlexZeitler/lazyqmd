@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.5.0] - 2026-03-19
+
+### Added
+
+- Context management: edit collection context inline with `x` (improves qmd query expansion)
+- Cleanup shortcut `c` to clear caches and vacuum DB
+- Collection detail view shows path and current context
+
 ## [0.4.0] - 2026-03-19
 
 ### Added

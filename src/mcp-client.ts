@@ -34,8 +34,15 @@ export type SearchOptions = {
 };
 
 export type ContextEntry = {
-  collection: string;
+  uri: string;
   text: string;
+};
+
+export type CollectionDetail = {
+  name: string;
+  path: string;
+  pattern: string;
+  include: string;
 };
 
 async function run(args: string[]): Promise<string> {
@@ -193,15 +200,27 @@ export class QmdMcpClient {
     return run(args);
   }
 
-  async contextList(collection: string): Promise<string> {
-    return run(["context", "list", collection]);
+  async contextList(): Promise<string> {
+    return run(["context", "list"]);
   }
 
-  async contextAdd(collection: string, text: string): Promise<void> {
-    await run(["context", "add", collection, text]);
+  async contextAdd(uri: string, text: string): Promise<void> {
+    await run(["context", "add", uri, text]);
   }
 
-  async contextRemove(collection: string, id: string): Promise<void> {
-    await run(["context", "rm", collection, id]);
+  async contextRemove(uri: string): Promise<void> {
+    await run(["context", "rm", uri]);
+  }
+
+  async collectionShow(name: string): Promise<CollectionDetail> {
+    const output = await run(["collection", "show", name]);
+    const path = output.match(/Path:\s+(.+)/)?.[1]?.trim() ?? "";
+    const pattern = output.match(/Pattern:\s+(.+)/)?.[1]?.trim() ?? "**/*.md";
+    const include = output.match(/Include:\s+(.+)/)?.[1]?.trim() ?? "yes";
+    return { name, path, pattern, include };
+  }
+
+  async cleanup(): Promise<string> {
+    return run(["cleanup"]);
   }
 }

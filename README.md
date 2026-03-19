@@ -53,6 +53,8 @@ bun src/index.ts
 | `a` | Add collection |
 | `d` | Delete collection |
 | `r` | Rename collection |
+| `x` | Edit context for selected collection |
+| `c` | Run cleanup (clear caches, vacuum DB) |
 | `e` | Create embeddings |
 | `u` | Re-index all collections (`qmd update`) |
 | `q` | Quit |
@@ -107,6 +109,12 @@ lex: htmx\nvec: web components
 | **all** | `Ctrl+A` | Return all matches instead of top 20. Combine with min-score to filter. |
 | **min-score** | `Ctrl+S` | Only show results above the threshold (0.3–0.9). Useful with `all` to get all high-quality matches. |
 | **candidate limit** | `Ctrl+L` | Max candidates to rerank (default: auto/40). Lower = faster, higher = better quality. |
+
+### Context
+
+Each collection can have a context — a short description that helps qmd understand what the collection contains, improving query expansion and search quality.
+
+Press `x` in the sidebar (with a collection selected) to edit the context. Enter saves, empty input deletes, Esc cancels. The current context is shown in the collection detail view.
 
 ### File Browser
 
