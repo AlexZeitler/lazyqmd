@@ -1,5 +1,6 @@
 import { watch, type FSWatcher } from "node:fs";
 import { join, dirname, basename } from "node:path";
+import pkg from "../package.json";
 import { marked } from "marked";
 import YAML from "yaml";
 import {
@@ -140,7 +141,7 @@ export class App {
     });
     this.versionText = new TextRenderable(renderer, {
       id: "version-text",
-      content: t`${dim("lazyqmd v0.1.0")}`,
+      content: t`${dim(`lazyqmd v${pkg.version}`)}`,
     });
     this.footer.add(this.footerText);
     this.footer.add(this.versionText);
