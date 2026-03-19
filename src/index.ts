@@ -1,5 +1,12 @@
 #!/usr/bin/env bun
 
+import pkg from "../package.json";
+
+if (process.argv.includes("--version") || process.argv.includes("-v")) {
+  console.log(`lazyqmd v${pkg.version}`);
+  process.exit(0);
+}
+
 import { createCliRenderer } from "@opentui/core";
 import { loadConfig } from "./config.ts";
 import { QmdMcpClient } from "./mcp-client.ts";
