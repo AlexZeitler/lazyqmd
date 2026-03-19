@@ -53,7 +53,7 @@ export async function listCollections(): Promise<Collection[]> {
   const blocks = output.split(/\n(?=\S)/);
 
   for (const block of blocks) {
-    const headerMatch = block.match(/^(\S+)\s+\(qmd:\/\/(\S+?)\/?\)/);
+    const headerMatch = block.match(/^(.+?)\s+\(qmd:\/\/(.+?)\/?\)/);
     if (!headerMatch) continue;
 
     const name = headerMatch[1]!;
