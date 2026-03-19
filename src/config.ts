@@ -4,6 +4,7 @@ import { mkdir } from "node:fs/promises";
 
 export type Config = {
   mcpPort: number;
+  theme?: Record<string, string>;
 };
 
 const DEFAULT_CONFIG: Config = {

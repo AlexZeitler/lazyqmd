@@ -7,6 +7,7 @@ import {
   fg,
 } from "@opentui/core";
 import type { Collection } from "../qmd-cli.ts";
+import type { Theme } from "../theme.ts";
 
 export class DetailView {
   readonly container: BoxRenderable;
@@ -16,7 +17,7 @@ export class DetailView {
   private updatedText: TextRenderable;
   private statusText: TextRenderable;
 
-  constructor(private ctx: RenderContext) {
+  constructor(private ctx: RenderContext, private theme: Theme) {
     this.container = new BoxRenderable(ctx, {
       id: "detail-container",
       flexDirection: "column",
@@ -58,24 +59,24 @@ export class DetailView {
   }
 
   show(collection: Collection): void {
-    this.titleText.content = t`${bold(fg("#fab283")(collection.name))} ${fg("#808080")(`(${collection.uri})`)}`;
-    this.patternText.content = t`${fg("#808080")("Pattern:")}  ${collection.pattern}`;
-    this.filesText.content = t`${fg("#808080")("Files:")}    ${String(collection.files)}`;
-    this.updatedText.content = t`${fg("#808080")("Updated:")}  ${collection.updated}`;
+    this.titleText.content = t`${bold(fg(this.theme.title)(collection.name))} ${fg(this.theme.muted)(`(${collection.uri})`)}`;
+    this.patternText.content = t`${fg(this.theme.muted)("Pattern:")}  ${collection.pattern}`;
+    this.filesText.content = t`${fg(this.theme.muted)("Files:")}    ${String(collection.files)}`;
+    this.updatedText.content = t`${fg(this.theme.muted)("Updated:")}  ${collection.updated}`;
   }
 
   showAll(collections: Collection[]): void {
     const totalFiles = collections.reduce((sum, c) => sum + c.files, 0);
-    this.titleText.content = t`${bold(fg("#fab283")("All Collections"))}`;
-    this.patternText.content = t`${fg("#808080")("Collections:")}  ${String(collections.length)}`;
-    this.filesText.content = t`${fg("#808080")("Total files:")}  ${String(totalFiles)}`;
+    this.titleText.content = t`${bold(fg(this.theme.title)("All Collections"))}`;
+    this.patternText.content = t`${fg(this.theme.muted)("Collections:")}  ${String(collections.length)}`;
+    this.filesText.content = t`${fg(this.theme.muted)("Total files:")}  ${String(totalFiles)}`;
     this.updatedText.content = "";
   }
 
   showStatus(message: string, error = false): void {
     this.statusText.content = error
-      ? t`${fg("#e06c75")(message)}`
-      : t`${fg("#808080")(message)}`;
+      ? t`${fg(this.theme.error)(message)}`
+      : t`${fg(this.theme.muted)(message)}`;
   }
 
   clear(): void {

@@ -10,6 +10,7 @@ import {
   bold,
 } from "@opentui/core";
 import type { Collection } from "../qmd-cli.ts";
+import type { Theme } from "../theme.ts";
 
 export class ConfirmDeleteView {
   readonly container: BoxRenderable;
@@ -21,7 +22,7 @@ export class ConfirmDeleteView {
   onConfirm: ((name: string) => void) | null = null;
   onCancel: (() => void) | null = null;
 
-  constructor(private ctx: RenderContext) {
+  constructor(private ctx: RenderContext, private theme: Theme) {
     this.container = new BoxRenderable(ctx, {
       id: "confirm-delete-container",
       flexDirection: "column",
@@ -42,8 +43,8 @@ export class ConfirmDeleteView {
         { name: "Cancel", description: "", value: "cancel" },
       ],
       flexGrow: 1,
-      selectedBackgroundColor: "#1e1e1e",
-      selectedTextColor: "#e06c75",
+      selectedBackgroundColor: this.theme.background,
+      selectedTextColor: this.theme.error,
       wrapSelection: true,
     });
 
@@ -64,7 +65,7 @@ export class ConfirmDeleteView {
 
   show(collection: Collection): void {
     this.currentCollection = collection;
-    this.messageText.content = t`Delete collection ${bold(fg("#e06c75")(`"${collection.name}"`))}?`;
+    this.messageText.content = t`Delete collection ${bold(fg(this.theme.error)(`"${collection.name}"`))}?`;
   }
 
   focusSelect(): void {

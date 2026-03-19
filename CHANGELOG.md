@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.3.0] - 2026-03-19
+
+### Added
+
+- Theming support with Tokyo Night as default theme
+- Theme cascade: Omarchy auto-detection -> config overrides -> defaults
+- All UI colors configurable via `theme` section in `~/.config/lazyqmd/options.json`
+
 ## [0.2.4] - 2026-03-19
 
 ### Added

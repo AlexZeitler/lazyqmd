@@ -12,6 +12,7 @@ import {
   bold,
 } from "@opentui/core";
 import type { QmdMcpClient, SearchResult } from "../mcp-client.ts";
+import type { Theme } from "../theme.ts";
 
 export type DocumentOpenHandler = (file: string, title: string) => void;
 
@@ -36,6 +37,7 @@ export class SearchView {
   constructor(
     private ctx: RenderContext,
     private mcp: QmdMcpClient,
+    private theme: Theme,
   ) {
     this.container = new BoxRenderable(ctx, {
       id: "search-container",
@@ -79,9 +81,9 @@ export class SearchView {
       showDescription: true,
       showScrollIndicator: true,
       wrapSelection: true,
-      selectedBackgroundColor: "#264f78",
-      selectedTextColor: "#ffffff",
-      selectedDescriptionColor: "#a0c4e8",
+      selectedBackgroundColor: theme.selection_bg,
+      selectedTextColor: theme.selection_fg,
+      selectedDescriptionColor: theme.selection_desc,
     });
     this.container.add(this.resultsList);
 
@@ -115,7 +117,7 @@ export class SearchView {
   private makeLabelContent() {
     const m = SEARCH_MODES[this.modeIndex]!;
     const scope = this.selectedCollection ?? "All";
-    return t`${bold(fg("#fab283")(`${m.label}`))} ${fg("#808080")(`[${scope}]`)}${bold(fg("#fab283")(":"))}`;
+    return t`${bold(fg(this.theme.accent)(`${m.label}`))} ${fg(this.theme.muted)(`[${scope}]`)}${bold(fg(this.theme.accent)(":"))}`;
   }
 
   setOnDocumentOpen(handler: DocumentOpenHandler): void {
@@ -140,14 +142,14 @@ export class SearchView {
     if (this.mode === "vsearch" || this.mode === "query") {
       const status = await this.mcp.status();
       if (status.needsEmbedding > 0 && !status.hasVectorIndex) {
-        this.statusText.content = t`${fg("#f5a742")(`No embeddings yet. Run 'qmd embed' first.`)}`;
+        this.statusText.content = t`${fg(this.theme.warning)(`No embeddings yet. Run 'qmd embed' first.`)}`;
         return;
       }
     }
 
     const statusMsg =
       this.mode === "query" ? "Querying (LLM)..." : "Searching...";
-    this.statusText.content = t`${fg("#808080")(statusMsg)}`;
+    this.statusText.content = t`${fg(this.theme.muted)(statusMsg)}`;
     this.results = [];
     this.resultsList.options = [{ name: " ", description: "", value: "" }];
     this.resultsList.options = [];
@@ -168,11 +170,11 @@ export class SearchView {
       }
 
       if (this.results.length === 0) {
-        this.statusText.content = t`${fg("#f5a742")("No results found.")}`;
+        this.statusText.content = t`${fg(this.theme.warning)("No results found.")}`;
         return;
       }
 
-      this.statusText.content = t`${fg("#7fd88f")(`${this.results.length} results`)}`;
+      this.statusText.content = t`${fg(this.theme.success)(`${this.results.length} results`)}`;
 
       this.resultsList.options = this.results.map((r) => ({
         name: `${r.title}`,
@@ -180,7 +182,7 @@ export class SearchView {
         value: r.file,
       }));
     } catch (err) {
-      this.statusText.content = t`${fg("#e06c75")(`Error: ${err}`)}`;
+      this.statusText.content = t`${fg(this.theme.error)(`Error: ${err}`)}`;
     }
   }
 

@@ -5,6 +5,7 @@ import {
   type RenderContext,
 } from "@opentui/core";
 import type { Collection } from "../qmd-cli.ts";
+import type { Theme } from "../theme.ts";
 
 export type CollectionSelectedHandler = (collection: Collection) => void;
 
@@ -13,7 +14,7 @@ export class CollectionsView {
   private collections: Collection[] = [];
   private onSelected: CollectionSelectedHandler | null = null;
 
-  constructor(ctx: RenderContext) {
+  constructor(ctx: RenderContext, private theme: Theme) {
     this.select = new SelectRenderable(ctx, {
       id: "collections-select",
       width: "100%" as any,
@@ -22,9 +23,9 @@ export class CollectionsView {
       showDescription: true,
       showScrollIndicator: true,
       wrapSelection: true,
-      selectedBackgroundColor: "#264f78",
-      selectedTextColor: "#ffffff",
-      selectedDescriptionColor: "#a0c4e8",
+      selectedBackgroundColor: theme.selection_bg,
+      selectedTextColor: theme.selection_fg,
+      selectedDescriptionColor: theme.selection_desc,
     });
 
     this.select.on(

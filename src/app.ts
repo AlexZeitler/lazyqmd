@@ -33,6 +33,7 @@ import { AddCollectionView } from "./views/add-collection.ts";
 import { RenameCollectionView } from "./views/rename-collection.ts";
 import { ConfirmDeleteView } from "./views/confirm-delete.ts";
 import { FilesView } from "./views/files.ts";
+import type { Theme } from "./theme.ts";
 
 type AppState =
   | "collections"
@@ -77,6 +78,7 @@ export class App {
   constructor(
     private renderer: CliRenderer,
     private mcp: QmdMcpClient,
+    private theme: Theme,
   ) {
     // Root container
     this.root = new BoxRenderable(renderer, {
@@ -102,7 +104,7 @@ export class App {
       width: 30,
       border: true,
       borderStyle: "rounded",
-      focusedBorderColor: "#606060",
+      focusedBorderColor: theme.border_active,
       title: "Collections",
       titleAlignment: "left",
       flexDirection: "column",
@@ -115,7 +117,7 @@ export class App {
       flexGrow: 1,
       border: true,
       borderStyle: "rounded",
-      focusedBorderColor: "#606060",
+      focusedBorderColor: theme.border_active,
       title: "Collection",
       titleAlignment: "left",
       flexDirection: "column",
@@ -148,14 +150,14 @@ export class App {
     this.root.add(this.footer);
 
     // Create views
-    this.collectionsView = new CollectionsView(renderer);
-    this.detailView = new DetailView(renderer);
-    this.searchView = new SearchView(renderer, mcp);
-    this.documentView = new DocumentView(renderer, mcp);
-    this.addCollectionView = new AddCollectionView(renderer);
-    this.renameCollectionView = new RenameCollectionView(renderer);
-    this.confirmDeleteView = new ConfirmDeleteView(renderer);
-    this.filesView = new FilesView(renderer);
+    this.collectionsView = new CollectionsView(renderer, theme);
+    this.detailView = new DetailView(renderer, theme);
+    this.searchView = new SearchView(renderer, mcp, theme);
+    this.documentView = new DocumentView(renderer, mcp, theme);
+    this.addCollectionView = new AddCollectionView(renderer, theme);
+    this.renameCollectionView = new RenameCollectionView(renderer, theme);
+    this.confirmDeleteView = new ConfirmDeleteView(renderer, theme);
+    this.filesView = new FilesView(renderer, theme);
 
     // Add collections select to sidebar
     this.sidebar.add(this.collectionsView.select);
@@ -220,7 +222,7 @@ export class App {
     if (this.state === "search") {
       const mode = this.searchView.modeLabel;
       const scope = this.searchView.scopeLabel;
-      return t`${bold("Esc")}: Back  ${bold("Tab")}: Input/Results  ${bold("Ctrl+T")}: Mode (${mode})  ${bold("Enter")}: Search/Open  ${bold("q")}: Quit  ${fg("#808080")(`[${scope}]`)}`;
+      return t`${bold("Esc")}: Back  ${bold("Tab")}: Input/Results  ${bold("Ctrl+T")}: Mode (${mode})  ${bold("Enter")}: Search/Open  ${bold("q")}: Quit  ${fg(this.theme.muted)(`[${scope}]`)}`;
     }
     if (this.state === "document") {
       return t`${bold("Esc")}: Back  ${bold("j/k")}: Scroll  ${bold("e")}: Edit  ${bold("p")}: Preview  ${bold("q")}: Quit`;

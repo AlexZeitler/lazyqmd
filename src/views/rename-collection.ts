@@ -9,6 +9,7 @@ import {
   bold,
 } from "@opentui/core";
 import type { Collection } from "../qmd-cli.ts";
+import type { Theme } from "../theme.ts";
 
 export class RenameCollectionView {
   readonly container: BoxRenderable;
@@ -23,7 +24,7 @@ export class RenameCollectionView {
   onComplete: ((oldName: string, newName: string) => void) | null = null;
   onCancel: (() => void) | null = null;
 
-  constructor(private ctx: RenderContext) {
+  constructor(private ctx: RenderContext, private theme: Theme) {
     this.container = new BoxRenderable(ctx, {
       id: "rename-collection-container",
       flexDirection: "column",
@@ -34,7 +35,7 @@ export class RenameCollectionView {
 
     this.currentLabel = new TextRenderable(ctx, {
       id: "rename-current-label",
-      content: t`${fg("#808080")("Current:")}`,
+      content: t`${fg(this.theme.muted)("Current:")}`,
     });
 
     this.currentNameText = new TextRenderable(ctx, {
@@ -44,7 +45,7 @@ export class RenameCollectionView {
 
     this.newNameLabel = new TextRenderable(ctx, {
       id: "rename-new-label",
-      content: t`${bold(fg("#fab283")("New name:"))}`,
+      content: t`${bold(fg(this.theme.accent)("New name:"))}`,
     });
 
     this.newNameInput = new InputRenderable(ctx, {
@@ -90,7 +91,7 @@ export class RenameCollectionView {
   private submit(): void {
     const newName = this.newNameInput.value.trim();
     if (!newName) {
-      this.statusText.content = t`${fg("#e06c75")("Name is required.")}`;
+      this.statusText.content = t`${fg(this.theme.error)("Name is required.")}`;
       return;
     }
     if (!this.currentCollection) return;
@@ -100,7 +101,7 @@ export class RenameCollectionView {
 
   showStatus(message: string, error = false): void {
     this.statusText.content = error
-      ? t`${fg("#e06c75")(message)}`
-      : t`${fg("#808080")(message)}`;
+      ? t`${fg(this.theme.error)(message)}`
+      : t`${fg(this.theme.muted)(message)}`;
   }
 }

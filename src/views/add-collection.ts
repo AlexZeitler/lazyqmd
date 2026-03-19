@@ -13,6 +13,7 @@ import {
   fg,
   bold,
 } from "@opentui/core";
+import type { Theme } from "../theme.ts";
 
 export class AddCollectionView {
   readonly container: BoxRenderable;
@@ -34,7 +35,7 @@ export class AddCollectionView {
     null;
   onCancel: (() => void) | null = null;
 
-  constructor(private ctx: RenderContext) {
+  constructor(private ctx: RenderContext, private theme: Theme) {
     this.container = new BoxRenderable(ctx, {
       id: "add-collection-container",
       flexDirection: "column",
@@ -46,7 +47,7 @@ export class AddCollectionView {
     // Path
     this.pathLabel = new TextRenderable(ctx, {
       id: "add-path-label",
-      content: t`${bold(fg("#fab283")("Path:"))}`,
+      content: t`${bold(fg(this.theme.accent)("Path:"))}`,
     });
     this.pathInput = new InputRenderable(ctx, {
       id: "add-path-input",
@@ -62,14 +63,14 @@ export class AddCollectionView {
       showDescription: true,
       showScrollIndicator: true,
       wrapSelection: true,
-      selectedBackgroundColor: "#1e1e1e",
-      selectedTextColor: "#eeeeee",
+      selectedBackgroundColor: this.theme.background,
+      selectedTextColor: this.theme.foreground,
     });
 
     // Name
     this.nameLabel = new TextRenderable(ctx, {
       id: "add-name-label",
-      content: t`${bold(fg("#fab283")("Name:"))}`,
+      content: t`${bold(fg(this.theme.accent)("Name:"))}`,
     });
     this.nameInput = new InputRenderable(ctx, {
       id: "add-name-input",
@@ -80,7 +81,7 @@ export class AddCollectionView {
     // Pattern
     this.patternLabel = new TextRenderable(ctx, {
       id: "add-pattern-label",
-      content: t`${bold(fg("#fab283")("Pattern:"))}`,
+      content: t`${bold(fg(this.theme.accent)("Pattern:"))}`,
     });
     this.patternInput = new InputRenderable(ctx, {
       id: "add-pattern-input",
@@ -248,7 +249,7 @@ export class AddCollectionView {
       );
 
       if (matches.length === 0) {
-        this.statusText.content = t`${fg("#808080")("No matches.")}`;
+        this.statusText.content = t`${fg(this.theme.muted)("No matches.")}`;
       } else if (matches.length === 1) {
         const rawDir = raw.slice(0, raw.lastIndexOf("/") + 1);
         const entry = matches[0]!;
@@ -276,12 +277,12 @@ export class AddCollectionView {
     const pattern = this.patternInput.value.trim() || "**/*.md";
 
     if (!path) {
-      this.statusText.content = t`${fg("#e06c75")("Path is required.")}`;
+      this.statusText.content = t`${fg(this.theme.error)("Path is required.")}`;
       this.pathInput.focus();
       return;
     }
     if (!name) {
-      this.statusText.content = t`${fg("#e06c75")("Name is required.")}`;
+      this.statusText.content = t`${fg(this.theme.error)("Name is required.")}`;
       this.nameInput.focus();
       return;
     }
@@ -291,8 +292,8 @@ export class AddCollectionView {
 
   showStatus(message: string, error = false): void {
     this.statusText.content = error
-      ? t`${fg("#e06c75")(message)}`
-      : t`${fg("#808080")(message)}`;
+      ? t`${fg(this.theme.error)(message)}`
+      : t`${fg(this.theme.muted)(message)}`;
   }
 }
 

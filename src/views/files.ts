@@ -12,6 +12,7 @@ import {
   bold,
 } from "@opentui/core";
 import { listFiles, type FileEntry } from "../qmd-cli.ts";
+import type { Theme } from "../theme.ts";
 
 export type FileOpenHandler = (file: string, title: string) => void;
 
@@ -34,7 +35,7 @@ export class FilesView {
   private collectionName = "";
   private allFiles: FileEntry[] = [];
 
-  constructor(private ctx: RenderContext) {
+  constructor(private ctx: RenderContext, private theme: Theme) {
     this.container = new BoxRenderable(ctx, {
       id: "files-container",
       flexDirection: "column",
@@ -50,7 +51,7 @@ export class FilesView {
 
     const label = new TextRenderable(ctx, {
       id: "files-label",
-      content: t`${bold(fg("#fab283")("Filter:"))}`,
+      content: t`${bold(fg(theme.accent)("Filter:"))}`,
     });
 
     this.input = new InputRenderable(ctx, {
@@ -77,9 +78,9 @@ export class FilesView {
       showDescription: true,
       showScrollIndicator: true,
       wrapSelection: true,
-      selectedBackgroundColor: "#264f78",
-      selectedTextColor: "#ffffff",
-      selectedDescriptionColor: "#a0c4e8",
+      selectedBackgroundColor: theme.selection_bg,
+      selectedTextColor: theme.selection_fg,
+      selectedDescriptionColor: theme.selection_desc,
     });
     this.container.add(this.filesList);
 
@@ -105,7 +106,7 @@ export class FilesView {
   async load(collectionName: string): Promise<void> {
     this.collectionName = collectionName;
     this.input.value = "";
-    this.statusText.content = t`${fg("#808080")("Loading files...")}`;
+    this.statusText.content = t`${fg(this.theme.muted)("Loading files...")}`;
     this.filesList.options = [];
     this.allFiles = [];
 
@@ -113,13 +114,13 @@ export class FilesView {
       this.allFiles = await listFiles(collectionName);
 
       if (this.allFiles.length === 0) {
-        this.statusText.content = t`${fg("#f5a742")("No files found.")}`;
+        this.statusText.content = t`${fg(this.theme.warning)("No files found.")}`;
         return;
       }
 
       this.applyFilter();
     } catch (err) {
-      this.statusText.content = t`${fg("#e06c75")(`Error: ${err}`)}`;
+      this.statusText.content = t`${fg(this.theme.error)(`Error: ${err}`)}`;
     }
   }
 
@@ -130,8 +131,8 @@ export class FilesView {
       : this.allFiles;
 
     this.statusText.content = query
-      ? t`${fg("#7fd88f")(`${filtered.length}/${this.allFiles.length} files`)}`
-      : t`${fg("#7fd88f")(`${this.allFiles.length} files`)}`;
+      ? t`${fg(this.theme.success)(`${filtered.length}/${this.allFiles.length} files`)}`
+      : t`${fg(this.theme.success)(`${this.allFiles.length} files`)}`;
 
     this.filesList.options = filtered.map((f) => ({
       name: f.path,

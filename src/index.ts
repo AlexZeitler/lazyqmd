@@ -49,10 +49,12 @@ if (process.argv[2] === "self-update") {
 
 import { createCliRenderer } from "@opentui/core";
 import { loadConfig } from "./config.ts";
+import { loadTheme } from "./theme.ts";
 import { QmdMcpClient } from "./mcp-client.ts";
 import { App } from "./app.ts";
 
 const config = await loadConfig();
+const theme = loadTheme(config.theme);
 const mcp = new QmdMcpClient(config.mcpPort);
 
 let renderer: Awaited<ReturnType<typeof createCliRenderer>> | null = null;
@@ -64,7 +66,7 @@ try {
     exitOnCtrlC: true,
   });
 
-  const app = new App(renderer, mcp);
+  const app = new App(renderer, mcp, theme);
   await app.start();
 } catch (err) {
   if (renderer) {

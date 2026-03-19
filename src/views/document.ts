@@ -11,6 +11,7 @@ import {
 } from "@opentui/core";
 import YAML from "yaml";
 import type { QmdMcpClient } from "../mcp-client.ts";
+import type { Theme } from "../theme.ts";
 
 export class DocumentView {
   readonly container: ScrollBoxRenderable;
@@ -24,24 +25,25 @@ export class DocumentView {
   constructor(
     private ctx: RenderContext,
     private mcp: QmdMcpClient,
+    private theme: Theme,
   ) {
     this.syntaxStyle = SyntaxStyle.fromStyles({
-      default: { fg: parseColor("#eeeeee") },
-      "markup.heading": { fg: parseColor("#9d7cd8"), bold: true },
-      "markup.heading.1": { fg: parseColor("#9d7cd8"), bold: true },
-      "markup.heading.2": { fg: parseColor("#9d7cd8"), bold: true },
-      "markup.heading.3": { fg: parseColor("#9d7cd8"), bold: true },
-      "markup.heading.4": { fg: parseColor("#9d7cd8"), bold: true },
-      "markup.strong": { fg: parseColor("#f5a742"), bold: true },
-      "markup.italic": { fg: parseColor("#e5c07b"), italic: true },
-      "markup.raw": { fg: parseColor("#7fd88f") },
+      default: { fg: parseColor(theme.foreground) },
+      "markup.heading": { fg: parseColor(theme.heading), bold: true },
+      "markup.heading.1": { fg: parseColor(theme.heading), bold: true },
+      "markup.heading.2": { fg: parseColor(theme.heading), bold: true },
+      "markup.heading.3": { fg: parseColor(theme.heading), bold: true },
+      "markup.heading.4": { fg: parseColor(theme.heading), bold: true },
+      "markup.strong": { fg: parseColor(theme.strong), bold: true },
+      "markup.italic": { fg: parseColor(theme.italic), italic: true },
+      "markup.raw": { fg: parseColor(theme.code) },
       "markup.strikethrough": { dim: true },
-      "markup.link.label": { fg: parseColor("#56b6c2"), underline: true },
-      "markup.link.url": { fg: parseColor("#fab283") },
-      "markup.link": { fg: parseColor("#808080") },
-      "markup.list": { fg: parseColor("#fab283") },
-      "punctuation.special": { fg: parseColor("#808080") },
-      conceal: { fg: parseColor("#808080") },
+      "markup.link.label": { fg: parseColor(theme.link), underline: true },
+      "markup.link.url": { fg: parseColor(theme.link_url) },
+      "markup.link": { fg: parseColor(theme.muted) },
+      "markup.list": { fg: parseColor(theme.list) },
+      "punctuation.special": { fg: parseColor(theme.muted) },
+      conceal: { fg: parseColor(theme.muted) },
     });
 
     this.container = new ScrollBoxRenderable(ctx, {
@@ -88,7 +90,7 @@ export class DocumentView {
     this.currentFile = file;
     this.currentTitle = title;
     this.currentContent = null;
-    this.headerText.content = t`${bold(fg("#fab283")(title))} ${fg("#808080")(`(${file})`)}`;
+    this.headerText.content = t`${bold(fg(this.theme.title)(title))} ${fg(this.theme.muted)(`(${file})`)}`;
     this.contentMarkdown.content = "*Loading...*";
 
     try {
@@ -102,7 +104,7 @@ export class DocumentView {
           const fm = YAML.parse(fmMatch[1]!) as Record<string, unknown>;
           if (fm.title && typeof fm.title === "string") {
             this.currentTitle = fm.title;
-            this.headerText.content = t`${bold(fg("#fab283")(fm.title))} ${fg("#808080")(`(${file})`)}`;
+            this.headerText.content = t`${bold(fg(this.theme.title)(fm.title))} ${fg(this.theme.muted)(`(${file})`)}`;
           }
         } catch {}
       }
