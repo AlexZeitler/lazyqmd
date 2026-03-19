@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.4.0] - 2026-03-19
+
+### Added
+
+- Advanced search options: full document output (Ctrl+F), explain scores (Ctrl+E), all matches (Ctrl+A), min-score filter (Ctrl+S), candidate limit (Ctrl+L)
+- Structured query support: `lex:`, `vec:`, `hyde:`, `expand:` prefixes in search input
+- Options status bar below search input showing active toggles
+- Updated README with full documentation of search features, theming, and CLI
+
+### Fixed
+
+- Large command output (>64KB) was truncated due to pipe buffer limits
+- Search results list not clearing when no results found
+- Explain field parsed as object instead of string
+
 ## [0.3.0] - 2026-03-19
 
 ### Added

@@ -20,20 +20,48 @@ export type SearchResult = {
   score: number;
   context: string | null;
   snippet: string;
+  explain?: Record<string, unknown>;
+};
+
+export type SearchOptions = {
+  limit?: number;
+  collection?: string;
+  minScore?: number;
+  full?: boolean;
+  explain?: boolean;
+  candidateLimit?: number;
+  all?: boolean;
+};
+
+export type ContextEntry = {
+  collection: string;
+  text: string;
 };
 
 async function run(args: string[]): Promise<string> {
-  const proc = Bun.spawn(["qmd", ...args], {
-    stdout: "pipe",
-    stderr: "pipe",
-  });
-  const text = await new Response(proc.stdout).text();
-  const code = await proc.exited;
-  if (code !== 0) {
-    const stderr = await new Response(proc.stderr).text();
-    throw new Error(`qmd ${args.join(" ")} failed (${code}): ${stderr}`);
+  // Use temp file for stdout to avoid pipe buffer truncation with large outputs
+  const { openSync, closeSync } = await import("node:fs");
+  const { unlink } = await import("node:fs/promises");
+  const tmpFile = `/tmp/lazyqmd-${Date.now()}-${Math.random().toString(36).slice(2)}.json`;
+  const fd = openSync(tmpFile, "w");
+
+  try {
+    const proc = Bun.spawn(["qmd", ...args], {
+      stdout: fd,
+      stderr: "pipe",
+    });
+    const errText = await new Response(proc.stderr).text();
+    const code = await proc.exited;
+    closeSync(fd);
+
+    const text = await Bun.file(tmpFile).text();
+    if (code !== 0) {
+      throw new Error(`qmd ${args.join(" ")} failed (${code}): ${errText}`);
+    }
+    return text;
+  } finally {
+    try { await unlink(tmpFile); } catch {}
   }
-  return text;
 }
 
 function parseStatus(output: string): StatusResult {
@@ -70,14 +98,43 @@ function parseStatus(output: string): StatusResult {
 function parseSearchOutput(output: string): SearchResult[] {
   const trimmed = output.trim();
   if (!trimmed || !trimmed.startsWith("[")) return [];
-  return JSON.parse(trimmed) as SearchResult[];
+  try {
+    return JSON.parse(trimmed) as SearchResult[];
+  } catch {
+    // Try to find the JSON array in the output (qmd may prepend status text)
+    const start = trimmed.indexOf("[");
+    const end = trimmed.lastIndexOf("]");
+    if (start >= 0 && end > start) {
+      return JSON.parse(trimmed.slice(start, end + 1)) as SearchResult[];
+    }
+    return [];
+  }
+}
+
+function buildSearchArgs(
+  command: string,
+  query: string,
+  opts?: SearchOptions,
+): string[] {
+  const args = [command, query, "--json"];
+  if (opts?.all) {
+    args.push("--all");
+  } else {
+    args.push("-n", String(opts?.limit ?? 20));
+  }
+  if (opts?.collection) args.push("-c", opts.collection);
+  if (opts?.minScore != null) args.push("--min-score", String(opts.minScore));
+  if (opts?.full) args.push("--full");
+  if (opts?.explain) args.push("--explain");
+  if (opts?.candidateLimit != null)
+    args.push("-C", String(opts.candidateLimit));
+  return args;
 }
 
 export class QmdMcpClient {
   constructor(private _port: number) {}
 
   async connect(): Promise<void> {
-    // Verify qmd is available
     const proc = Bun.spawn(["qmd", "status"], {
       stdout: "pipe",
       stderr: "pipe",
@@ -92,34 +149,38 @@ export class QmdMcpClient {
     return parseStatus(output);
   }
 
-  async search(
-    query: string,
-    opts?: { limit?: number; collection?: string },
-  ): Promise<SearchResult[]> {
-    const args = ["search", query, "--json", "-n", String(opts?.limit ?? 20)];
-    if (opts?.collection) args.push("-c", opts.collection);
+  async search(query: string, opts?: SearchOptions): Promise<SearchResult[]> {
+    const args = buildSearchArgs("search", query, opts);
     const output = await run(args);
     return parseSearchOutput(output);
   }
 
   async vectorSearch(
     query: string,
-    opts?: { limit?: number; collection?: string },
+    opts?: SearchOptions,
   ): Promise<SearchResult[]> {
-    const args = ["vsearch", query, "--json", "-n", String(opts?.limit ?? 20)];
-    if (opts?.collection) args.push("-c", opts.collection);
+    const args = buildSearchArgs("vsearch", query, opts);
     const output = await run(args);
     return parseSearchOutput(output);
   }
 
   async deepSearch(
     query: string,
-    opts?: { limit?: number; collection?: string },
+    opts?: SearchOptions,
   ): Promise<SearchResult[]> {
-    const args = ["query", query, "--json", "-n", String(opts?.limit ?? 20)];
-    if (opts?.collection) args.push("-c", opts.collection);
+    const args = buildSearchArgs("query", query, opts);
     const output = await run(args);
     return parseSearchOutput(output);
+  }
+
+  async multiGet(
+    pattern: string,
+    opts?: { maxLines?: number; maxBytes?: number },
+  ): Promise<string> {
+    const args = ["multi-get", pattern];
+    if (opts?.maxLines) args.push("-l", String(opts.maxLines));
+    if (opts?.maxBytes) args.push("--max-bytes", String(opts.maxBytes));
+    return run(args);
   }
 
   async getDocument(
@@ -130,5 +191,17 @@ export class QmdMcpClient {
     if (opts?.maxLines) args.push("-l", String(opts.maxLines));
     if (opts?.lineNumbers) args.push("--line-numbers");
     return run(args);
+  }
+
+  async contextList(collection: string): Promise<string> {
+    return run(["context", "list", collection]);
+  }
+
+  async contextAdd(collection: string, text: string): Promise<void> {
+    await run(["context", "add", collection, text]);
+  }
+
+  async contextRemove(collection: string, id: string): Promise<void> {
+    await run(["context", "rm", collection, id]);
   }
 }

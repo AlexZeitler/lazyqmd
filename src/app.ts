@@ -222,7 +222,11 @@ export class App {
     if (this.state === "search") {
       const mode = this.searchView.modeLabel;
       const scope = this.searchView.scopeLabel;
-      return t`${bold("Esc")}: Back  ${bold("Tab")}: Input/Results  ${bold("Ctrl+T")}: Mode (${mode})  ${bold("Enter")}: Search/Open  ${bold("q")}: Quit  ${fg(this.theme.muted)(`[${scope}]`)}`;
+      const opts = this.searchView.optionsLabel;
+      if (opts) {
+        return t`${bold("^T")}: Mode (${mode})  ${bold("^F")}: Full  ${bold("^E")}: Explain  ${bold("^A")}: All  ${bold("^S")}: MinScore  ${bold("^L")}: Candidates  ${fg(this.theme.muted)(`[${scope}] {${opts}}`)}`;
+      }
+      return t`${bold("^T")}: Mode (${mode})  ${bold("^F")}: Full  ${bold("^E")}: Explain  ${bold("^A")}: All  ${bold("^S")}: MinScore  ${bold("^L")}: Candidates  ${fg(this.theme.muted)(`[${scope}]`)}`;
     }
     if (this.state === "document") {
       return t`${bold("Esc")}: Back  ${bold("j/k")}: Scroll  ${bold("e")}: Edit  ${bold("p")}: Preview  ${bold("q")}: Quit`;
@@ -249,12 +253,44 @@ export class App {
   private setupKeyboard(): void {
     this.renderer.keyInput.on("keypress", (key: KeyEvent) => {
 
-      // Search mode toggle (Ctrl+T) — works regardless of focus
-      if (this.state === "search" && key.name === "t" && key.ctrl) {
-        this.searchView.cycleMode();
-        this.updateFooter();
-        key.preventDefault();
-        return;
+      // Search toggles (Ctrl+key) — work regardless of focus
+      if (this.state === "search" && key.ctrl) {
+        if (key.name === "t") {
+          this.searchView.cycleMode();
+          this.updateFooter();
+          key.preventDefault();
+          return;
+        }
+        if (key.name === "f") {
+          this.searchView.toggleFull();
+          this.updateFooter();
+          key.preventDefault();
+          return;
+        }
+        if (key.name === "e") {
+          this.searchView.toggleExplain();
+          this.updateFooter();
+          key.preventDefault();
+          return;
+        }
+        if (key.name === "a") {
+          this.searchView.toggleAll();
+          this.updateFooter();
+          key.preventDefault();
+          return;
+        }
+        if (key.name === "s") {
+          this.searchView.cycleMinScore();
+          this.updateFooter();
+          key.preventDefault();
+          return;
+        }
+        if (key.name === "l") {
+          this.searchView.cycleCandidateLimit();
+          this.updateFooter();
+          key.preventDefault();
+          return;
+        }
       }
 
 
