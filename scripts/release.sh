@@ -52,5 +52,8 @@ git push && git push --tags
 # Create GitHub release with changelog as body
 gh release create "$TAG" --title "$TAG" --notes "$NOTES"
 
+# Publish to npm
+npm publish --access public
+
 echo ""
 echo "Released lazyqmd $TAG"

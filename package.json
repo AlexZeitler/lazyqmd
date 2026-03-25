@@ -1,7 +1,8 @@
 {
-  "name": "lazyqmd",
+  "name": "@alexzeitler/lazyqmd",
   "version": "0.6.0",
   "type": "module",
+  "files": ["src", "lazyqmd"],
   "bin": {
     "lazyqmd": "./lazyqmd"
   },

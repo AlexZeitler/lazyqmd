@@ -2,7 +2,7 @@
 
 A terminal UI for browsing, searching, and previewing [qmd](https://github.com/tobi/qmd) document collections. Built with [Bun](https://bun.sh) and [@opentui/core](https://github.com/anomalyco/opentui).
 
-![](./assets/lazyqmd-search-tmux-results.png)
+![](https://github.com/alexzeitler/lazyqmd/raw/master/assets/lazyqmd-search-tmux-results.png)
 
 ## Requirements
 
@@ -12,10 +12,8 @@ A terminal UI for browsing, searching, and previewing [qmd](https://github.com/t
 
 ## Install
 
-Global install (no source checkout needed):
-
 ```sh
-bun install -g github:alexzeitler/lazyqmd
+bun install -g @alexzeitler/lazyqmd
 ```
 
 Then run:
@@ -135,9 +133,9 @@ Type in the filter input for fuzzy matching on file paths.
 | `p` | Open live preview in Chrome |
 | `Esc` | Back |
 
-![](./assets/lazyqmd-neovim.png)
+![](https://github.com/alexzeitler/lazyqmd/raw/master/assets/lazyqmd-neovim.png)
 
-![](./assets/lazyqmd-html-preview.png)
+![](https://github.com/alexzeitler/lazyqmd/raw/master/assets/lazyqmd-html-preview.png)
 
 ### Live Preview
 
