@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.1] - 2026-03-25
+
+### Changed
+
+- Switch to scoped npm package `@alexzeitler/lazyqmd`
+- Use absolute GitHub URLs for README images (npm compatibility)
+
 ## [0.6.0] - 2026-03-25
 
 ### Added
