@@ -187,6 +187,44 @@ Add a `theme` section to your config to override any color:
 }
 ```
 
+## Local Index Support
+
+lazyqmd supports project-local qmd indexes. When you run `lazyqmd` from a directory containing a `.qmd/index.yml`, it automatically uses that local index instead of the global one at `~/.cache/qmd/`.
+
+This allows per-repository collections and a separate SQLite index, managed independently from the global setup. See [davidgasquez/dotfiles@5de0ae7](https://github.com/davidgasquez/dotfiles/commit/5de0ae7112ecc4c3377083ce3485477dc860894c) for the reference implementation of local qmd indexes.
+
+### Setup
+
+Create a `.qmd/` directory in your project root with an `index.yml`:
+
+```
+myproject/
+├── .qmd/
+│   ├── index.yml        # Collection definitions (check into git)
+│   ├── index.sqlite     # Generated index (add to .gitignore)
+│   └── external/        # Cloned external repos (add to .gitignore)
+```
+
+Example `index.yml`:
+
+```yaml
+collections:
+  myproject:
+    path: /absolute/path/to/project
+    pattern: "**/*.md"
+    context:
+      "": Description of the project for LLM context
+```
+
+Recommended `.gitignore`:
+
+```gitignore
+.qmd/*
+!.qmd/index.yml
+```
+
+When lazyqmd detects a local index, it prints a message on startup and all commands (`u` for update, search, etc.) operate on the local index.
+
 ## Configuration
 
 Config file: `~/.config/lazyqmd/options.json`

@@ -45,6 +45,8 @@ export type CollectionDetail = {
   include: string;
 };
 
+import { spawnEnv } from "./local-index.ts";
+
 async function run(args: string[]): Promise<string> {
   // Use temp file for stdout to avoid pipe buffer truncation with large outputs
   const { openSync, closeSync } = await import("node:fs");
@@ -56,6 +58,7 @@ async function run(args: string[]): Promise<string> {
     const proc = Bun.spawn(["qmd", ...args], {
       stdout: fd,
       stderr: "pipe",
+      env: spawnEnv(),
     });
     const errText = await new Response(proc.stderr).text();
     const code = await proc.exited;
@@ -145,6 +148,7 @@ export class QmdMcpClient {
     const proc = Bun.spawn(["qmd", "status"], {
       stdout: "pipe",
       stderr: "pipe",
+      env: spawnEnv(),
     });
     await proc.exited;
   }

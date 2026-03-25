@@ -3,6 +3,7 @@ import { join, dirname, basename } from "node:path";
 import pkg from "../package.json";
 import { marked } from "marked";
 import YAML from "yaml";
+import { spawnEnv } from "./local-index.ts";
 import {
   type CliRenderer,
   BoxRenderable,
@@ -859,6 +860,7 @@ export class App {
       const proc = Bun.spawn(["qmd", "update"], {
         stdout: "pipe",
         stderr: "pipe",
+        env: spawnEnv(),
       });
       const code = await proc.exited;
       if (code === 0) {

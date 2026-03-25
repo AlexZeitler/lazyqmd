@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.0] - 2026-03-25
+
+### Added
+
+- Local `.qmd/` index support: when a `.qmd/index.yml` exists in the current working directory, lazyqmd automatically uses the project-local index instead of the global one ([reference implementation](https://github.com/davidgasquez/dotfiles/commit/5de0ae7112ecc4c3377083ce3485477dc860894c))
+
 ## [0.5.0] - 2026-03-19
 
 ### Added

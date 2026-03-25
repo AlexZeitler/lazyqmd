@@ -1,6 +1,7 @@
 import { join, dirname, basename } from "node:path";
 import { readdir } from "node:fs/promises";
 import YAML from "yaml";
+import { spawnEnv, localConfigDir } from "./local-index.ts";
 
 export type Collection = {
   name: string;
@@ -19,6 +20,7 @@ async function run(args: string[]): Promise<string> {
   const proc = Bun.spawn(["qmd", ...args], {
     stdout: "pipe",
     stderr: "pipe",
+    env: spawnEnv(),
   });
   const [text, errText] = await Promise.all([
     new Response(proc.stdout).text(),
@@ -32,9 +34,10 @@ async function run(args: string[]): Promise<string> {
 }
 
 async function loadQmdConfig(): Promise<QmdConfig> {
-  const configDir =
-    process.env.XDG_CONFIG_HOME || join(process.env.HOME!, ".config");
-  const configPath = join(configDir, "qmd", "index.yml");
+  const localDir = localConfigDir();
+  const configPath = localDir
+    ? join(localDir, "index.yml")
+    : join(process.env.XDG_CONFIG_HOME || join(process.env.HOME!, ".config"), "qmd", "index.yml");
   try {
     const file = Bun.file(configPath);
     const content = await file.text();

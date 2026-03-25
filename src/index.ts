@@ -52,9 +52,12 @@ import { loadConfig } from "./config.ts";
 import { loadTheme } from "./theme.ts";
 import { QmdMcpClient } from "./mcp-client.ts";
 import { App } from "./app.ts";
+import { detectLocalIndex } from "./local-index.ts";
 
 const config = await loadConfig();
 const theme = loadTheme(config.theme);
+await detectLocalIndex();
+
 const mcp = new QmdMcpClient(config.mcpPort);
 
 let renderer: Awaited<ReturnType<typeof createCliRenderer>> | null = null;
