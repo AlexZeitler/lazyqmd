@@ -9,9 +9,11 @@ import {
   TextRenderable,
   type SelectOption,
   type RenderContext,
+  type KeyEvent,
   t,
   fg,
   bold,
+  dim,
 } from "@opentui/core";
 import type { Theme } from "../theme.ts";
 
@@ -30,6 +32,8 @@ export class AddCollectionView {
   private inputs: InputRenderable[];
   private completionVisible = false;
   private completionDir = "";
+  private filterText = "";
+  private allCompletions: SelectOption[] = [];
 
   onComplete: ((path: string, name: string, pattern: string) => void) | null =
     null;
@@ -140,22 +144,26 @@ export class AddCollectionView {
 
   private showCompletions(entries: CompletionEntry[], rawDir: string): void {
     this.completionDir = rawDir;
+    this.filterText = "";
     if (!this.completionVisible) {
       this.completionVisible = true;
       this.rebuildLayout();
     }
     // Set options after the select is in the layout
-    this.completionSelect.options = entries.map((e) => ({
+    this.allCompletions = entries.map((e) => ({
       name: e.name + (e.isDir ? "/" : ""),
       description: e.isDir ? "dir" : "file",
       value: rawDir + e.name + (e.isDir ? "/" : ""),
     }));
+    this.completionSelect.options = this.allCompletions;
     this.completionSelect.focus();
   }
 
   private hideCompletions(): void {
     if (this.completionVisible) {
       this.completionVisible = false;
+      this.filterText = "";
+      this.allCompletions = [];
       this.completionSelect.options = [{ name: " ", description: "", value: "" }];
       this.completionSelect.options = [];
       this.rebuildLayout();
@@ -165,6 +173,47 @@ export class AddCollectionView {
 
   get isCompletionActive(): boolean {
     return this.completionVisible;
+  }
+
+  /** Handle key while completion list is visible. Returns true if consumed. */
+  handleKey(key: KeyEvent): boolean {
+    if (!this.completionVisible) return false;
+
+    if (key.name === "backspace") {
+      if (this.filterText.length > 0) {
+        this.filterText = this.filterText.slice(0, -1);
+        this.applyFilter();
+      }
+      return true;
+    }
+
+    // Single printable character (not ctrl/meta modified, not enter)
+    if (key.sequence && key.sequence.length === 1 && !key.ctrl && !key.meta && key.name !== "return") {
+      this.filterText += key.sequence;
+      this.applyFilter();
+      return true;
+    }
+
+    return false;
+  }
+
+  private applyFilter(): void {
+    if (this.filterText === "") {
+      this.completionSelect.options = this.allCompletions;
+      this.statusText.content = "";
+    } else {
+      const needle = this.filterText.toLowerCase();
+      const filtered = this.allCompletions.filter((o) =>
+        fuzzyMatch(o.name.toLowerCase(), needle),
+      );
+      this.completionSelect.options = filtered.length > 0
+        ? filtered
+        : [{ name: " ", description: "", value: "" }];
+      if (filtered.length === 0) {
+        this.completionSelect.options = this.allCompletions;
+      }
+      this.statusText.content = t`${dim(`Filter: ${this.filterText}`)}${filtered.length === 0 ? fg(this.theme.error)(" (no matches)") : ""}`;
+    }
   }
 
   focusFirst(): void {
@@ -314,6 +363,14 @@ async function listDirEntries(dir: string): Promise<CompletionEntry[]> {
     return a.name.localeCompare(b.name);
   });
   return result;
+}
+
+function fuzzyMatch(text: string, pattern: string): boolean {
+  let pi = 0;
+  for (let ti = 0; ti < text.length && pi < pattern.length; ti++) {
+    if (text[ti] === pattern[pi]) pi++;
+  }
+  return pi === pattern.length;
 }
 
 function commonPrefix(strings: string[]): string {

@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.3] - 2026-03-28
+
+### Added
+
+- Fuzzy search filter for path completion suggestions when adding collections
+
 ## [0.6.2] - 2026-03-28
 
 ### Fixed

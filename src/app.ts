@@ -398,6 +398,11 @@ export class App {
           key.preventDefault();
           return;
         }
+        // Fuzzy filter while completion list is open
+        if (this.state === "add-collection" && this.addCollectionView.handleKey(key)) {
+          key.preventDefault();
+          return;
+        }
         // Let the view's inputs/selects handle enter, typing, etc.
         return;
       }
