@@ -303,7 +303,6 @@ async function listDirEntries(dir: string): Promise<CompletionEntry[]> {
   const entries = await readdir(dir);
   const result: CompletionEntry[] = [];
   for (const entry of entries) {
-    if (entry.startsWith(".")) continue;
     const entryStat = await stat(join(dir, entry)).catch(() => null);
     if (entryStat) {
       result.push({ name: entry, isDir: entryStat.isDirectory() });

@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.2] - 2026-03-28
+
+### Fixed
+
+- Path completion no longer excludes dot-directories (e.g. `~/.claude/`) when adding collections
+
 ## [0.6.1] - 2026-03-25
 
 ### Changed
