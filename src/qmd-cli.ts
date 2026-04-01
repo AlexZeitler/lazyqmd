@@ -101,27 +101,65 @@ export async function resolveQmdUri(
   return resolveCaseInsensitive(col.path, relativePath);
 }
 
+// Normalize a path segment the same way qmd does: lowercase, strip
+// non-alphanumeric (except hyphens/dots/spaces), collapse runs of hyphens.
+function slugify(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/[\s_]/g, "-")
+    .replace(/[^a-z0-9.\-]/g, "")
+    .replace(/-{2,}/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 async function resolveCaseInsensitive(
   basePath: string,
   relativePath: string,
 ): Promise<string | null> {
   const parts = relativePath.split("/");
-  let current = basePath;
+  return resolveSegments(basePath, parts, 0);
+}
 
-  for (const part of parts) {
-    try {
-      const entries = await readdir(current);
-      const found = entries.find(
-        (e) => e.toLowerCase() === part.toLowerCase(),
-      );
-      if (!found) return null;
-      current = join(current, found);
-    } catch {
-      return null;
+async function resolveSegments(
+  current: string,
+  parts: string[],
+  index: number,
+): Promise<string | null> {
+  if (index >= parts.length) {
+    // All segments resolved — verify the file actually exists
+    return (await Bun.file(current).exists()) ? current : null;
+  }
+
+  const part = parts[index]!;
+  let entries: string[];
+  try {
+    entries = await readdir(current);
+  } catch {
+    return null;
+  }
+
+  // Collect candidates: exact case-insensitive matches first, then slug matches
+  const slug = slugify(part);
+  const candidates: string[] = [];
+  for (const e of entries) {
+    if (e.toLowerCase() === part.toLowerCase()) {
+      candidates.unshift(e); // prefer exact case-insensitive matches
+    } else if (slugify(e) === slug) {
+      candidates.push(e);
     }
   }
 
-  return current;
+  // Try each candidate, backtracking if it leads to a dead end
+  for (const candidate of candidates) {
+    const result = await resolveSegments(
+      join(current, candidate),
+      parts,
+      index + 1,
+    );
+    if (result) return result;
+  }
+
+  return null;
 }
 
 function expandHome(p: string): string {
